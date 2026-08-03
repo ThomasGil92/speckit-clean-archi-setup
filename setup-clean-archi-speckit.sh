@@ -107,9 +107,17 @@ install_preset() {
 
   specify preset add "$name" \
     --from "$url" \
-    --priority "$priority"
+    --priority "$priority" || true
 
-  success "Preset '$name' installed."
+  if preset_installed "$name"; then
+    success "Preset '$name' installed."
+  else
+    warning "Preset '$name' was NOT installed (declined or failed)."
+    warning "   'specify preset add' may prompt for confirmation (e.g. untrusted"
+    warning "   source) and this script cannot answer that prompt when run via"
+    warning "   'curl | bash'. Run this command yourself in a terminal:"
+    warning "   specify preset add \"$name\" --from \"$url\" --priority \"$priority\""
+  fi
 }
 
 install_extension() {
@@ -124,9 +132,17 @@ install_extension() {
   log "Installing extension '$name'..."
 
   specify extension add "$name" \
-    --from "$url"
+    --from "$url" || true
 
-  success "Extension '$name' installed."
+  if extension_installed "$name"; then
+    success "Extension '$name' installed."
+  else
+    warning "Extension '$name' was NOT installed (declined or failed)."
+    warning "   'specify extension add' may prompt for confirmation (e.g. untrusted"
+    warning "   source) and this script cannot answer that prompt when run via"
+    warning "   'curl | bash'. Run this command yourself in a terminal:"
+    warning "   specify extension add \"$name\" --from \"$url\""
+  fi
 }
 
 # ------------------------------------------------------------
