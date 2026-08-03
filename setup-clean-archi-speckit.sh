@@ -117,6 +117,22 @@ mkdir -p .specify/memory
 # Under `set -o pipefail`, `grep -q` closes the pipe as soon as it finds a
 # match, which can send SIGPIPE to `specify` and make it exit non-zero even
 # though the match was found — making the pipeline look like a failure.
+# When this script is run via `curl | bash`, its own stdin is the piped
+# script content. `specify`'s interactive prompts (e.g. untrusted-source
+# confirmation) read from the stdin they inherit, which would otherwise
+# consume bytes of the still-unexecuted script and corrupt it. Redirect
+# those calls to a real terminal when one exists, or to /dev/null so they
+# fail closed instead of stealing script bytes.
+specify_stdin() {
+  if [ -t 0 ]; then
+    echo "/dev/stdin"
+  elif [ -r /dev/tty ]; then
+    echo "/dev/tty"
+  else
+    echo "/dev/null"
+  fi
+}
+
 preset_installed() {
   local output
   output=$(specify preset list 2>/dev/null || true)
@@ -140,7 +156,7 @@ install_preset() {
     fi
 
     log "Removing preset '$name' before reinstalling..."
-    specify preset remove "$name" || true
+    specify preset remove "$name" < "$(specify_stdin)" || true
 
     if preset_installed "$name"; then
       warning "Preset '$name' could not be removed — skipping reinstall."
@@ -152,7 +168,7 @@ install_preset() {
 
   specify preset add "$name" \
     --from "$url" \
-    --priority "$priority" || true
+    --priority "$priority" < "$(specify_stdin)" || true
 
   if preset_installed "$name"; then
     success "Preset '$name' installed."
@@ -175,7 +191,7 @@ install_extension() {
     fi
 
     log "Removing extension '$name' before reinstalling..."
-    specify extension remove "$name" || true
+    specify extension remove "$name" < "$(specify_stdin)" || true
 
     if extension_installed "$name"; then
       warning "Extension '$name' could not be removed — skipping reinstall."
@@ -186,7 +202,7 @@ install_extension() {
   log "Installing extension '$name'..."
 
   specify extension add "$name" \
-    --from "$url" || true
+    --from "$url" < "$(specify_stdin)" || true
 
   if extension_installed "$name"; then
     success "Extension '$name' installed."
