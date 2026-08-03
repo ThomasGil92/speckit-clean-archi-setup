@@ -9,9 +9,13 @@ One-shot script to quickly set up a **Spec Kit** project with a minimal stack fo
    - `architecture-governance`
 2. Installs the extension:
    - `architecture-guard` (boundary review, drift, DRY…)
-3. Writes two constitution files:
-   - `.specify/memory/constitution.md` → general principles (TDD, Gherkin, quality)
-   - `.specify/memory/architecture_constitution.md` → Clean Architecture rules (layers + Dependency Rule)
+3. Writes four governance files under `.specify/memory/`:
+   - `constitution.md` → general principles (TDD, Gherkin, quality) + product context + Tech defaults
+   - `architecture_constitution.md` → Clean Architecture rules (layers + Dependency Rule)
+   - `coding_standards.md` → naming, error handling, logging, API conventions, testing, complexity
+   - `quality_gate.md` → the checklist a feature must pass before being considered done
+
+   Architecture boundary enforcement (forbidden dependencies, drift detection, mechanical verification) is intentionally left to the `architecture-guard` extension rather than duplicated in these files.
 
 > **Note**: the agent command `/speckit.architecture-guard.init` cannot be run by a bash script. It must be run manually in your agent after the script.
 
@@ -89,6 +93,17 @@ The first `/speckit.specify` describes the product.
 - Language / runtime, primary framework, package manager
 - Test framework, linting / formatting
 - Persistence and other project-wide conventions
+
+### `coding_standards.md` (general coding conventions)
+
+- Naming, error handling, logging
+- API / external interface conventions
+- Testing rules, complexity, maintainability
+
+### `quality_gate.md` (definition of done)
+
+- Specification, TDD, code quality, and validation checklists
+- Defers architecture checks to the `architecture-guard` extension
 
 ## Installed stack
 
