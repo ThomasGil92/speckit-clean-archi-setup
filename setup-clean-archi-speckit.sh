@@ -25,6 +25,38 @@ error() {
   exit 1
 }
 
+# Prompts before overwriting a file that already exists. Returns 0 (proceed)
+# if the file is new or the user confirms, 1 (skip) otherwise. Reads from
+# /dev/tty so the prompt still works when the script is run via
+# `curl ... | bash` (stdin is the piped script, not the keyboard).
+confirm_overwrite() {
+  local file="$1"
+
+  if [ ! -f "$file" ]; then
+    return 0
+  fi
+
+  warning "'$file' already exists — it may contain content you've customized."
+
+  local reply=""
+  if [ -t 0 ]; then
+    read -r -p "   Overwrite it? [y/N] " reply
+  elif [ -r /dev/tty ]; then
+    read -r -p "   Overwrite it? [y/N] " reply < /dev/tty
+  else
+    warning "   No interactive terminal available — skipping '$file'."
+    return 1
+  fi
+
+  case "$reply" in
+    y|Y|yes|YES|Yes) return 0 ;;
+    *)
+      warning "   Skipping '$file' — keeping existing content."
+      return 1
+      ;;
+  esac
+}
+
 # ------------------------------------------------------------
 # Checks
 # ------------------------------------------------------------
@@ -145,6 +177,7 @@ echo ""
 echo "📝 3. Seeding constitution (product context + tech defaults)"
 echo "--------------------------------------------------------------"
 
+if confirm_overwrite ".specify/memory/constitution.md"; then
 cat > .specify/memory/constitution.md << 'EOF'
 # Project Constitution
 
@@ -172,8 +205,8 @@ Keep this section stable. Detailed features go into individual specifications.]
 - **Persistence**: <e.g. PostgreSQL via Prisma>
 - **Other conventions**: <e.g. monorepo layout, API style (REST/GraphQL), CI provider>
 EOF
-
 success ".specify/memory/constitution.md"
+fi
 
 # ------------------------------------------------------------
 # Coding Standards
@@ -187,6 +220,7 @@ echo ""
 echo "📐 4. Writing coding standards"
 echo "------------------------------"
 
+if confirm_overwrite ".specify/memory/coding_standards.md"; then
 cat > .specify/memory/coding_standards.md << 'EOF'
 # Coding Standards
 
@@ -329,8 +363,8 @@ small changes with limited blast radius.
 Code is not considered complete until the applicable project quality gates
 have passed.
 EOF
-
 success ".specify/memory/coding_standards.md"
+fi
 
 # ------------------------------------------------------------
 # Quality Gate
@@ -343,6 +377,7 @@ echo ""
 echo "🚦 5. Writing quality gate"
 echo "--------------------------"
 
+if confirm_overwrite ".specify/memory/quality_gate.md"; then
 cat > .specify/memory/quality_gate.md << 'EOF'
 # Feature Quality Gate
 
@@ -396,8 +431,8 @@ A feature is complete only when every applicable gate passes.
 - [ ] Documentation is updated where necessary.
 - [ ] The feature is ready to merge.
 EOF
-
 success ".specify/memory/quality_gate.md"
+fi
 
 # ------------------------------------------------------------
 # Final state
