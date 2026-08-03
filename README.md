@@ -45,6 +45,16 @@ chmod +x setup-clean-archi-speckit.sh
 ./setup-clean-archi-speckit.sh
 ```
 
+> **Note on `curl | bash`**: `specify preset add` / `specify extension add` may
+> prompt for confirmation (e.g. an "untrusted source" warning). When the
+> script runs via `curl | bash`, stdin is the piped script itself, not your
+> keyboard, so that prompt gets auto-declined and the preset/extension is
+> silently **not** installed. The script detects this — it verifies each
+> install afterward and prints a warning with the exact command to re-run
+> yourself in an interactive terminal if it didn't go through. Always check
+> the summary at the end of the run (or `specify preset list` /
+> `specify extension list`) before assuming everything installed.
+
 ## After the script
 
 In your AI agent, run once, in this order:
