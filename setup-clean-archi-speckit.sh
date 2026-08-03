@@ -57,6 +57,34 @@ confirm_overwrite() {
   esac
 }
 
+# Prompts whether to reinstall a preset/extension that's already installed.
+# Returns 0 (reinstall) if the user confirms, 1 (keep) otherwise. Reads from
+# /dev/tty for the same reason as confirm_overwrite above.
+confirm_reinstall() {
+  local kind="$1"   # "preset" or "extension"
+  local name="$2"
+
+  warning "$kind '$name' is already installed."
+
+  local reply=""
+  if [ -t 0 ]; then
+    read -r -p "   Reinstall it? [y/N] " reply
+  elif [ -r /dev/tty ]; then
+    read -r -p "   Reinstall it? [y/N] " reply < /dev/tty
+  else
+    warning "   No interactive terminal available — keeping existing $kind '$name'."
+    return 1
+  fi
+
+  case "$reply" in
+    y|Y|yes|YES|Yes) return 0 ;;
+    *)
+      warning "   Keeping existing $kind '$name'."
+      return 1
+      ;;
+  esac
+}
+
 # ------------------------------------------------------------
 # Checks
 # ------------------------------------------------------------
@@ -85,12 +113,20 @@ mkdir -p .specify/memory
 # Preset / extension helpers
 # ------------------------------------------------------------
 
+# Note: output is captured into a variable rather than piped into `grep -q`.
+# Under `set -o pipefail`, `grep -q` closes the pipe as soon as it finds a
+# match, which can send SIGPIPE to `specify` and make it exit non-zero even
+# though the match was found — making the pipeline look like a failure.
 preset_installed() {
-  specify preset list 2>/dev/null | grep -q "$1"
+  local output
+  output=$(specify preset list 2>/dev/null || true)
+  [[ "$output" == *"$1"* ]]
 }
 
 extension_installed() {
-  specify extension list 2>/dev/null | grep -q "$1"
+  local output
+  output=$(specify extension list 2>/dev/null || true)
+  [[ "$output" == *"$1"* ]]
 }
 
 install_preset() {
@@ -99,8 +135,17 @@ install_preset() {
   local priority="$3"
 
   if preset_installed "$name"; then
-    warning "Preset '$name' is already installed — skipping."
-    return 0
+    if ! confirm_reinstall "Preset" "$name"; then
+      return 0
+    fi
+
+    log "Removing preset '$name' before reinstalling..."
+    specify preset remove "$name" || true
+
+    if preset_installed "$name"; then
+      warning "Preset '$name' could not be removed — skipping reinstall."
+      return 0
+    fi
   fi
 
   log "Installing preset '$name'..."
@@ -125,8 +170,17 @@ install_extension() {
   local url="$2"
 
   if extension_installed "$name"; then
-    warning "Extension '$name' is already installed — skipping."
-    return 0
+    if ! confirm_reinstall "Extension" "$name"; then
+      return 0
+    fi
+
+    log "Removing extension '$name' before reinstalling..."
+    specify extension remove "$name" || true
+
+    if extension_installed "$name"; then
+      warning "Extension '$name' could not be removed — skipping reinstall."
+      return 0
+    fi
   fi
 
   log "Installing extension '$name'..."
