@@ -9,15 +9,14 @@ One-shot script to quickly set up a **Spec Kit** project with a minimal stack fo
    - `architecture-governance`
 2. Installs the extension:
    - `architecture-guard` (boundary review, drift, DRY…)
-3. Writes four governance files under `.specify/memory/`:
-   - `constitution.md` → general principles (TDD, Gherkin, quality) + product context + Tech defaults
-   - `architecture_constitution.md` → Clean Architecture rules (layers + Dependency Rule)
+3. Writes three files under `.specify/memory/`:
+   - `constitution.md` → a **seed only**: product context + Tech defaults. Nothing else is written here.
    - `coding_standards.md` → naming, error handling, logging, API conventions, testing, complexity
    - `quality_gate.md` → the checklist a feature must pass before being considered done
 
-   Architecture boundary enforcement (forbidden dependencies, drift detection, mechanical verification) is intentionally left to the `architecture-guard` extension rather than duplicated in these files.
+`constitution.md`'s governance principles (TDD/BDD/ATDD discipline, security architecture) and `architecture_constitution.md` (Clean Architecture layers, Dependency Rule) are **not** written by this script — they come from the agent commands below. Writing them here would just get overwritten or restructured by those commands, so the script only seeds what nothing else provides.
 
-> **Note**: the agent command `/speckit.architecture-guard.init` cannot be run by a bash script. It must be run manually in your agent after the script.
+> **Note**: agent slash commands cannot be run by a bash script. Run them manually after the script (see "After the script").
 
 ## Prerequisites
 
@@ -48,13 +47,17 @@ chmod +x setup-clean-archi-speckit.sh
 
 ## After the script
 
-In your AI agent, run once:
+In your AI agent, run once, in this order:
 
 ```
 /speckit.architecture-guard.init
+/speckit.constitution
 ```
 
-For each new project, fill in the **Tech defaults** section once — by hand or with a short constitution prompt.
+- `/speckit.architecture-guard.init` writes `architecture_constitution.md` (layer boundaries, business logic placement, blocking violations).
+- `/speckit.constitution` populates `constitution.md`'s governance principles from the two installed presets' addenda (TDD/BDD/ATDD discipline from `test-first-governance`, security architecture principles from `architecture-governance`).
+
+For each new project, also fill in the **Tech defaults** section of `constitution.md` once — by hand or with a short constitution prompt.
 
 Then you can start normally:
 
@@ -67,32 +70,18 @@ Then you can start normally:
 
 The first `/speckit.specify` describes the product.
 
-## Constitution contents
+## Governance file contents
 
-### `constitution.md` (general principles)
+### `constitution.md` (seed, before you run the agent commands)
 
-- TDD is mandatory (RED → GREEN → REFACTOR)
-- Gherkin for every user-facing behavior
-- No business logic in outer layers
-- Small, focused modules
-- Quality gates must be respected (architecture-guard)
+- Product context — describe the product vision, users, and goals
+- Tech defaults — language/runtime, framework, package manager, test framework, linting, persistence
 
-### `architecture_constitution.md` (Clean Architecture)
+After `/speckit.constitution`, this file also gains the TDD/BDD/ATDD principles from `test-first-governance` and the security architecture principles from `architecture-governance`.
 
-- Dependency Rule: dependencies only point inward
-- Mandatory layers:
-  - `domain/`
-  - `application/`
-  - `infrastructure/`
-  - `presentation/` (or `interfaces/`)
-- Applies to backend, frontend, and any other runtime — no language lock-in
-- Property tests recommended for domain invariants
+### `architecture_constitution.md` (written entirely by `/speckit.architecture-guard.init`)
 
-### Tech defaults (filled in once per project)
-
-- Language / runtime, primary framework, package manager
-- Test framework, linting / formatting
-- Persistence and other project-wide conventions
+Not created by this script — owned end-to-end by the `architecture-guard` extension (layer boundaries, Dependency Rule, business logic placement, blocking violations).
 
 ### `coding_standards.md` (general coding conventions)
 

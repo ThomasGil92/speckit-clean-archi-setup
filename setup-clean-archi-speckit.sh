@@ -128,56 +128,41 @@ install_extension \
   "https://github.com/DyanGalih/spec-kit-architecture-guard/archive/refs/heads/main.zip"
 
 # ------------------------------------------------------------
-# Constitution
+# Constitution seed
 # ------------------------------------------------------------
-# NOTE: architecture-guard owns architecture boundary rules (Dependency Rule,
-# layers, forbidden dependencies, verification). This file intentionally stays
-# generic and does not duplicate what /speckit.architecture-guard.init writes.
+# NOTE: constitution.md and architecture_constitution.md are intentionally
+# NOT written here. Their real content comes from:
+#   - /speckit.constitution, which weaves in the constitution-addendum.md
+#     provided by the test-first-governance and architecture-governance
+#     presets (TDD/BDD/ATDD discipline, security architecture principles).
+#   - /speckit.architecture-guard.init, which owns architecture_constitution.md
+#     (layer boundaries, business logic placement, blocking violations).
+# Writing full content here would just be overwritten/restructured by those
+# commands. This script only seeds the one thing nothing else provides:
+# product context and per-project tech defaults.
 
 echo ""
-echo "📝 3. Writing constitution"
-echo "--------------------------"
+echo "📝 3. Seeding constitution (product context + tech defaults)"
+echo "--------------------------------------------------------------"
 
 cat > .specify/memory/constitution.md << 'EOF'
 # Project Constitution
 
-This project follows professional engineering discipline inspired by Clean Code,
-Test-Driven Development, Behavior-Driven Development, and Spec-Driven Development.
+Run `/speckit.constitution` to populate this file's governance principles
+from the installed presets (test-first-governance, architecture-governance).
+Run `/speckit.architecture-guard.init` to populate `architecture_constitution.md`.
 
-## Non-negotiable principles
-
-1. **TDD is mandatory**
-   Always write a failing test first (RED), then the minimal implementation
-   (GREEN), then refactor.
-
-2. **Behavior is specified in Gherkin**
-   Every user-facing behavior must be expressed as Gherkin scenarios
-   (Given / When / Then) before implementation.
-
-3. **No business logic in outer layers**
-   Controllers, UI components, handlers, and infrastructure adapters must
-   contain no business rules.
-
-4. **Small, focused modules**
-   Prefer composition over inheritance. Keep modules small and focused on
-   a single responsibility.
-
-5. **Quality gates are mandatory**
-   Features must pass the project quality gate before being considered complete.
-
-Architecture boundaries and their enforcement are governed separately by
-`architecture_constitution.md` and the `architecture-guard` extension.
+The two sections below are not provided by any preset or extension — fill
+them in once per project, by hand or with a short constitution prompt.
 
 ## Product context
 
 [Describe the overall product vision, main users, and high-level goals.
 Keep this section stable. Detailed features go into individual specifications.]
 
-## Tech defaults (fill in once per project)
+## Tech defaults
 
-[Fill this section once, at project start — by hand or with a short constitution
-prompt. It sets the defaults every spec/plan will assume unless a feature says
-otherwise.]
+[Sets the defaults every spec/plan will assume unless a feature says otherwise.]
 
 - **Language / runtime**: <e.g. TypeScript 5.x / Node 20>
 - **Primary framework**: <e.g. NestJS / Next.js / none>
@@ -186,79 +171,20 @@ otherwise.]
 - **Linting / formatting**: <e.g. ESLint + Prettier>
 - **Persistence**: <e.g. PostgreSQL via Prisma>
 - **Other conventions**: <e.g. monorepo layout, API style (REST/GraphQL), CI provider>
-
-These project-specific choices must not override the principles defined above.
 EOF
 
 success ".specify/memory/constitution.md"
-
-# ------------------------------------------------------------
-# Architecture Constitution
-# ------------------------------------------------------------
-
-echo ""
-echo "🏗️  4. Writing architecture constitution"
-echo "-----------------------------------------"
-
-cat > .specify/memory/architecture_constitution.md << 'EOF'
-# Architecture Constitution – Clean Architecture
-
-This project strictly follows Clean Architecture principles for all applications
-in the repository.
-
-## Dependency Rule (non-negotiable)
-
-Source code dependencies can only point **inward**.
-
-Domain ← Application ← Infrastructure / Presentation
-
-Never the opposite.
-
-## Mandatory Layers
-
-### 1. Domain
-- Entities, Value Objects, Domain Services
-- Repository / port interfaces
-- Pure business logic – no framework or infrastructure dependencies
-
-### 2. Application
-- Use cases / Interactors
-- Application services
-- Input/output ports and DTOs
-- Orchestrates the domain
-
-### 3. Infrastructure
-- Adapters: persistence, external APIs, messaging, file system, etc.
-- Framework-specific implementations of the ports defined inward
-
-### 4. Presentation (or Interfaces)
-- Controllers, presenters, API handlers
-- UI components / screens
-- Application entry points
-
-## Additional rules
-
-- Prefer property-based / invariant tests for domain rules when relevant
-- No leakage of infrastructure concerns into Domain or Application
-- The composition root (main / bootstrap) is the only place that wires concrete implementations
-- The same separation of concerns applies to backend, frontend and any other runtime
-
-Detailed enforcement (forbidden dependencies, drift detection, mechanical
-verification) is handled by the `architecture-guard` extension — run
-`/speckit.architecture-guard.init` to finalize this file.
-EOF
-
-success ".specify/memory/architecture_constitution.md"
 
 # ------------------------------------------------------------
 # Coding Standards
 # ------------------------------------------------------------
 # NOTE: this file covers general coding conventions (naming, error handling,
 # logging, API conventions, testing, complexity). Architectural boundary
-# rules are NOT repeated here — see architecture_constitution.md.
+# rules are NOT repeated here — see architecture_constitution.md
+# (owned by architecture-guard).
 
 echo ""
-echo "📐 5. Writing coding standards"
+echo "📐 4. Writing coding standards"
 echo "------------------------------"
 
 cat > .specify/memory/coding_standards.md << 'EOF'
@@ -414,7 +340,7 @@ success ".specify/memory/coding_standards.md"
 # are intentionally not repeated as a checklist here.
 
 echo ""
-echo "🚦 6. Writing quality gate"
+echo "🚦 5. Writing quality gate"
 echo "--------------------------"
 
 cat > .specify/memory/quality_gate.md << 'EOF'
@@ -479,16 +405,15 @@ success ".specify/memory/quality_gate.md"
 
 echo ""
 echo "======================================================"
-echo "⚠️  MANUAL ACTION REQUIRED (agent command)"
+echo "⚠️  MANUAL ACTION REQUIRED (agent commands)"
 echo "======================================================"
 echo ""
-echo "In your AI agent, run now:"
+echo "A bash script cannot run the agent's slash commands. In your AI"
+echo "agent, run these now to populate the real governance content:"
 echo ""
-echo "   /speckit.architecture-guard.init"
-echo ""
-echo "This finalizes/refines the architecture constitution on the"
-echo "architecture-guard side. (A bash script cannot run the agent's"
-echo "slash commands.)"
+echo "   /speckit.architecture-guard.init   → writes architecture_constitution.md"
+echo "   /speckit.constitution              → writes constitution.md from the"
+echo "                                         installed preset addenda"
 echo ""
 
 echo "Presets:"
@@ -500,8 +425,8 @@ specify extension list || true
 
 echo ""
 echo "📚 Governance files:"
-echo "  .specify/memory/constitution.md"
-echo "  .specify/memory/architecture_constitution.md"
+echo "  .specify/memory/constitution.md       (seed only — run /speckit.constitution)"
+echo "  .specify/memory/architecture_constitution.md (run /speckit.architecture-guard.init)"
 echo "  .specify/memory/coding_standards.md"
 echo "  .specify/memory/quality_gate.md"
 
