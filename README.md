@@ -69,16 +69,62 @@ In your AI agent, run once, in this order:
 
 For each new project, also fill in the **Tech defaults** section of `constitution.md` once — by hand or with a short constitution prompt.
 
-Then you can start normally:
+### Per feature: use `architecture-guard`'s own commands, not the plain `speckit.*` ones
+
+Once the extension is installed, don't drive features with the bare
+`/speckit.specify` / `/speckit.plan` / `/speckit.tasks` / `/speckit.implement`
+commands — `architecture-guard` ships its own `/speckit.architecture-guard.*`
+commands that wrap each phase with the governance checks (spec/plan/task
+gates against `architecture_constitution.md`, drift and boundary detection,
+refactor-task injection). The plain commands still work, but they skip all
+of that.
+
+Recommended flow, per feature:
 
 ```
-/speckit.specify
-/speckit.plan
-/speckit.tasks
-/speckit.implement
+/speckit.architecture-guard.governed-spec
+/speckit.architecture-guard.governed-delivery
+/speckit.architecture-guard.governed-implement
+/speckit.architecture-guard.architecture-verify
 ```
 
-The first `/speckit.specify` describes the product.
+- `/speckit.architecture-guard.governed-spec` — spec + clarify, with architecture/security validation and an auto-fix loop.
+- `/speckit.architecture-guard.governed-delivery` — plan → tasks → analyze in one resumable flow; the recommended entry point right after the spec. (`governed-plan` and `governed-tasks` also exist standalone, for rerunning just one of those phases.)
+- `/speckit.architecture-guard.governed-implement` — implementation with governance context, followed by a security + architecture review pass.
+- `/speckit.architecture-guard.architecture-verify` — final gate: checks all tasks were actually delivered against the plan.
+
+If the feature starts as a rough idea rather than a ready spec, run
+`/speckit.architecture-guard.governed-discover` first to shape it before
+`governed-spec`.
+
+> **Do the presets still apply with these `governed-*` commands?** Yes.
+> `test-first-governance` and `architecture-governance` work by *wrapping*
+> the plain `/speckit.specify`, `/speckit.clarify`, `/speckit.plan`,
+> `/speckit.tasks`, `/speckit.checklist`, `/speckit.analyze`, and
+> `/speckit.implement` commands — their requirements (Gherkin/TDD evidence,
+> threat modeling, S-ADRs, etc.) are composed directly into those commands.
+> The `governed-*` commands don't reimplement spec/plan/task/implement
+> generation — they call those same wrapped commands as steps in their
+> orchestration (see `governed-spec.md` calling `/speckit.specify` +
+> `/speckit.clarify`, `governed-delivery.md` calling `/speckit.tasks` +
+> `/speckit.analyze`, `governed-implement.md` calling `/speckit.implement`).
+> So preset requirements still apply automatically at every phase.
+> One exception: `governed-implement` falls back to an inline
+> implementation if `/speckit.implement` isn't available as a registered
+> command — that fallback path skips the preset wrap, so keep an eye on the
+> governance summary it prints.
+
+Standalone review commands (not part of the per-feature flow, but useful on demand):
+
+| Command | Use it to... |
+|---|---|
+| `/speckit.architecture-guard.architecture-workflow` | Run a full end-to-end architecture review (violations, severity, refactor tasks) |
+| `/speckit.architecture-guard.architecture-review` | Check alignment after `specify`/`plan`/`implement` |
+| `/speckit.architecture-guard.violation-detection` | Focus on a specific drift/boundary problem |
+| `/speckit.architecture-guard.refactor-generator` | Turn review findings into non-blocking refactor tasks |
+| `/speckit.architecture-guard.architecture-apply` | Inject approved refactor tasks into `plan.md`/`tasks.md` |
+| `/speckit.architecture-guard.init-brownfield` | Map an existing codebase before onboarding it (brownfield only) |
+| `/speckit.architecture-guard.consolidate-specs` | Refresh the local fallback context cache |
 
 ## Governance file contents
 
